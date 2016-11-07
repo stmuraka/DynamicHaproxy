@@ -1,0 +1,45 @@
+#!/bin/sh
+set -e
+
+DAEMON=/usr/bin/discovery
+NAME=discovery
+DESC="service discovery process"
+
+PID="/var/run/$NAME.pid"
+SERVICE_OPTS=""
+SERVICE_LOG=/var/log/discovery.log
+
+[ -f $DAEMON ] || exit 0
+
+case "$1" in
+  start)
+    echo "Starting $DESC" "$NAME"
+    $DAEMON $SERVICE_OPTS > $SERVICE_LOG 2>&1 &
+    echo $! > $PID
+    ;;
+
+  stop)
+    echo "Stopping $DESC" "$NAME"
+    kill `cat $PID`
+    ;;
+
+  restart)
+    echo "Restarting $DESC" "$NAME"
+    kill `cat $PID`
+    $DAEMON $SERVICE_OPTS > $SERVICE_LOG 2>&1 &
+    ;;
+
+  status)
+    if [ -e $PID ]; then
+      echo "$DAEMON is running"
+    else
+      echo "$DAEMON is not running"
+    fi
+    ;;
+
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    ;;
+esac
+
+exit 0

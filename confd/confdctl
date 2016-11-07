@@ -1,0 +1,60 @@
+#!/bin/bash
+# #############################################################################
+# "This program may be used, executed, copied, modified and distributed without
+# royalty for the purpose of developing, using, marketing, or distributing."
+#
+# IBM Cloud Performance
+# (C) COPYRIGHT International Business Machines Corp., 2014-2015
+# All Rights Reserved * Licensed Materials - Property of IBM
+# #############################################################################
+
+## This script is a wrapper script for monit to stop/start Logstash
+## example usage:
+##     confdctl {start|stop}
+
+[[ $# < 1 ]] && { echo "ERROR: usage: $0 {start|stop}"; exit 1; }
+
+action="${1}"
+
+pid_file="${CONFD_PIDFILE:=/var/run/confd/confd.pid}"
+
+# Create log directory for confd
+mkdir -p /var/log/confd
+
+case ${action} in
+    start)
+        # start confd
+          # -auth-token="": Auth bearer token to use
+          # -backend="etcd": backend to use
+          # -client-ca-keys="": client ca keys
+          # -client-cert="": the client cert
+          # -client-key="": the client key
+          # -confdir="/etc/confd": confd conf directory
+          # -config-file="": the confd config file
+          # -interval=600: backend polling interval
+          # -keep-stage-file=false: keep staged files
+          # -log-level="": level which confd should log messages
+          # -node=[]: list of backend nodes
+          # -noop=false: only show pending changes
+          # -onetime=false: run once and exit
+          # -prefix="/": key path prefix
+          # -scheme="http": the backend URI scheme (http or https)
+          # -srv-domain="": the name of the resource record
+          # -table="": the name of the DynamoDB table (only used with -backend=dynamodb)
+          # -version=false: print version and exit
+          # -watch=false: enable watch support
+        nohup confd -interval 3 -backend="redis" -node="localhost:6379" > /var/log/confd/confd.log 2>&1 &
+        # save the PID
+        echo $! > ${pid_file}
+    ;;
+    stop)
+        # stop confd by killing the pid_file
+        /bin/kill `/bin/cat ${pid_file}`
+        # delete the PID file
+        rm ${pid_file}
+    ;;
+    *)
+        echo "ERROR: usage: $0 {start|stop}"
+        exit 1
+    ;;
+esac
